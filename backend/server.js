@@ -92,14 +92,39 @@ io.on('connection', (socket) => {
 app.set('io', io);
 
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/study-plans', studyPlanRoutes);
-app.use('/api/tasks', taskRoutes);
-app.use('/api/ai', aiRoutes);
-app.use('/api/notes', notesRoutes);
-app.use('/api/analytics', analyticsRoutes);
-app.use('/api/timer', timerRoutes);
+console.log('🔄 Registering routes...');
+if (authRoutes) {
+  app.use('/api/auth', authRoutes);
+  console.log('✅ Auth routes registered at /api/auth');
+}
+if (userRoutes) {
+  app.use('/api/users', userRoutes);
+  console.log('✅ User routes registered at /api/users');
+}
+if (studyPlanRoutes) {
+  app.use('/api/study-plans', studyPlanRoutes);
+  console.log('✅ StudyPlan routes registered at /api/study-plans');
+}
+if (taskRoutes) {
+  app.use('/api/tasks', taskRoutes);
+  console.log('✅ Task routes registered at /api/tasks');
+}
+if (aiRoutes) {
+  app.use('/api/ai', aiRoutes);
+  console.log('✅ AI routes registered at /api/ai');
+}
+if (notesRoutes) {
+  app.use('/api/notes', notesRoutes);
+  console.log('✅ Notes routes registered at /api/notes');
+}
+if (analyticsRoutes) {
+  app.use('/api/analytics', analyticsRoutes);
+  console.log('✅ Analytics routes registered at /api/analytics');
+}
+if (timerRoutes) {
+  app.use('/api/timer', timerRoutes);
+  console.log('✅ Timer routes registered at /api/timer');
+}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
