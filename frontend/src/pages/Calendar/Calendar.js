@@ -76,6 +76,24 @@ const Calendar = () => {
   const [editEventOpen, setEditEventOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState(null);
   
+  // Google Calendar colors
+  const googleColors = {
+    primary: '#1a73e8',
+    background: '#f8f9fa',
+    dayHeader: '#5f6368',
+    todayBg: '#e8f0fe',
+    todayText: '#1a73e8',
+    eventBg: '#e8f0fe',
+    eventBorder: '#d2e3fc',
+    textPrimary: '#3c4043',
+    textSecondary: '#5f6368',
+    headerBg: '#f1f3f4',
+    border: '#dadce0',
+    weekendBg: '#f8f9fa',
+    timeIndicator: '#ea4335',
+    timeText: '#5f6368'
+  };
+  
   // New event form state
   const [newEvent, setNewEvent] = useState({
     title: '',
@@ -104,16 +122,22 @@ const Calendar = () => {
       setLoading(true);
       const response = await tasksService.getAllTasks();
       
-      if (response.tasks) {
+      if (response?.tasks) {
         // Convert tasks to calendar events
-        const calendarEvents = response.tasks.map(task => 
-          tasksService.taskToCalendarEvent(task)
-        );
+        const calendarEvents = response.tasks
+          .filter(task => task && task.dueDate) // Filter out invalid tasks
+          .map(task => tasksService.taskToCalendarEvent(task))
+          .filter(event => event); // Filter out any null/undefined events
+          
         setEvents(calendarEvents);
+      } else {
+        console.warn('No tasks found in response');
+        setEvents([]);
       }
     } catch (error) {
       console.error('Error loading tasks:', error);
-      toast.error('Failed to load calendar events');
+      toast.error('Failed to load calendar events. Please try again later.');
+      setEvents([]); // Reset to empty array on error
     } finally {
       setLoading(false);
     }
@@ -133,8 +157,6 @@ const Calendar = () => {
 
   const handleCreateEvent = async () => {
     try {
-      console.log('🗓️ Creating new calendar event:', newEvent);
-      
       // Validate required fields
       if (!newEvent.title.trim()) {
         toast.error('Event title is required');
@@ -152,8 +174,15 @@ const Calendar = () => {
         return;
       }
       
-      if (newEvent.endDateTime <= newEvent.startDateTime) {
+      // Ensure end time is after start time
+      if (new Date(newEvent.endDateTime) <= new Date(newEvent.startDateTime)) {
         toast.error('End time must be after start time');
+        return;
+      }
+      
+      // Ensure event is in the future
+      if (new Date(newEvent.startDateTime) < new Date()) {
+        toast.error('Start time must be in the future');
         return;
       }
       
@@ -511,114 +540,155 @@ const Calendar = () => {
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>
-      <Box>
-        {/* Header */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
-          <Box>
-            <Typography variant="h4" fontWeight="bold" gutterBottom>
-              Calendar
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              View and manage your study schedule
-            </Typography>
+      <Box sx={{ 
+        display: 'flex', 
+        flexDirection: 'column',
+        height: '100vh',
+        backgroundColor: googleColors.background,
+        overflow: 'hidden',
+        position: 'relative'
+      }}>
+        {/* Main Calendar Header */}
+        <Box sx={{ 
+          backgroundColor: 'white',
+          borderBottom: `1px solid ${googleColors.border}`,
+          padding: '8px 16px',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'sticky',
+          top: 0,
+          zIndex: 10
+        }}>
+          {/* Top Bar with Title */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            mb: 2
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box sx={{ 
+                display: 'flex', 
+                alignItems: 'center',
+                color: googleColors.primary,
+                fontWeight: 500,
+                fontSize: '22px',
+                '&:hover': { cursor: 'pointer' }
+              }}>
+                <Event sx={{ fontSize: '28px', mr: 1 }} />
+                Calendar
+              </Box>
+            </Box>
+            
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setCreateEventOpen(true)}
+              size="medium"
+              sx={{
+                backgroundColor: googleColors.primary,
+                color: 'white',
+                borderRadius: '24px',
+                padding: '6px 24px',
+                textTransform: 'none',
+                fontWeight: 500,
+                fontSize: '14px',
+                boxShadow: '0 1px 2px 0 rgba(26,115,232,0.3), 0 1px 3px 1px rgba(26,115,232,0.15)',
+                '&:hover': {
+                  backgroundColor: '#1a66cc',
+                  boxShadow: '0 1px 2px 0 rgba(26,102,204,0.3), 0 1px 3px 1px rgba(26,102,204,0.15)'
+                }
+              }}
+            >
+              Create
+            </Button>
           </Box>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setCreateEventOpen(true)}
-            size="large"
-          >
-            Add Event
-          </Button>
-        </Box>
-
-        {/* Calendar Controls */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <IconButton onClick={prevMonth}>
+          
+          {/* Calendar Controls */}
+          <Box sx={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            mb: 2
+          }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Typography variant="h5" sx={{ fontWeight: 500 }}>
+                {format(currentDate, 'MMMM yyyy')}
+              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <IconButton onClick={prevMonth} size="small">
                   <ChevronLeft />
                 </IconButton>
-                <Typography variant="h5" fontWeight="600" sx={{ minWidth: 200, textAlign: 'center' }}>
-                  {format(currentDate, 'MMMM yyyy')}
-                </Typography>
-                <IconButton onClick={nextMonth}>
-                  <ChevronRight />
-                </IconButton>
-                <Button
-                  variant="outlined"
-                  startIcon={<Today />}
+                <Button 
+                  variant="outlined" 
+                  size="small" 
                   onClick={goToToday}
-                  size="small"
+                  startIcon={<Today />}
+                  sx={{ mx: 1 }}
                 >
                   Today
                 </Button>
-              </Box>
-              
-              <Box sx={{ display: 'flex', gap: 1 }}>
-                <Button
-                  variant={view === 'month' ? 'contained' : 'outlined'}
-                  startIcon={<CalendarMonth />}
-                  onClick={() => setView('month')}
-                  size="small"
-                >
-                  Month
-                </Button>
-                <Button
-                  variant={view === 'week' ? 'contained' : 'outlined'}
-                  startIcon={<ViewWeek />}
-                  onClick={() => setView('week')}
-                  size="small"
-                >
-                  Week
-                </Button>
-                <Button
-                  variant={view === 'day' ? 'contained' : 'outlined'}
-                  startIcon={<ViewDay />}
-                  onClick={() => setView('day')}
-                  size="small"
-                >
-                  Day
-                </Button>
+                <IconButton onClick={nextMonth} size="small">
+                  <ChevronRight />
+                </IconButton>
               </Box>
             </Box>
-          </CardContent>
-        </Card>
+            
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                variant={view === 'month' ? 'contained' : 'outlined'}
+                startIcon={<CalendarMonth />}
+                onClick={() => setView('month')}
+                size="small"
+              >
+                Month
+              </Button>
+              <Button
+                variant={view === 'week' ? 'contained' : 'outlined'}
+                startIcon={<ViewWeek />}
+                onClick={() => setView('week')}
+                size="small"
+              >
+                Week
+              </Button>
+              <Button
+                variant={view === 'day' ? 'contained' : 'outlined'}
+                startIcon={<ViewDay />}
+                onClick={() => setView('day')}
+                size="small"
+              >
+                Day
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Calendar Content */}
+        <Box sx={{ 
+          p: 3,
+          backgroundColor: 'white',
+          minHeight: 'calc(100vh - 180px)',
+          position: 'relative',
+          overflow: 'auto'
+        }}>
 
         {/* Calendar Grid */}
         {view === 'month' && (
           <Card>
             <CardContent>
-              {/* Days of Week Header */}
-              <Grid container spacing={1} sx={{ mb: 1 }}>
-                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((day) => (
-                  <Grid item xs key={day}>
-                    <Typography
-                      variant="subtitle2"
-                      textAlign="center"
-                      color="text.secondary"
-                      fontWeight="600"
-                    >
+              <Grid container spacing={2}>
+                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                  <Grid item xs={12/7} key={day}>
+                    <Typography align="center" fontWeight="500" color="text.secondary">
                       {day}
                     </Typography>
                   </Grid>
                 ))}
-              </Grid>
-              
-              {/* Calendar Days */}
-              <Grid container spacing={1}>
-                {renderCalendarDays().map((day, index) => (
-                  <Grid item xs key={index}>
-                    {day}
-                  </Grid>
-                ))}
+                {renderCalendarDays()}
               </Grid>
             </CardContent>
           </Card>
         )}
-
-        {/* Week View */}
         {view === 'week' && (
           <Grid container spacing={2}>
             {renderWeekView()}
@@ -633,31 +703,32 @@ const Calendar = () => {
             </Typography>
             <Divider sx={{ mb: 2 }} />
             <List dense>
-              {getEventsForDate(new Date()).map((event) => (
-                <ListItem
-                  key={event.id}
-                  sx={{
-                    borderLeft: `4px solid ${event.color}`,
-                    mb: 1,
-                    borderRadius: 1,
-                    backgroundColor: 'action.hover',
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    setSelectedEvent(event);
-                    setEventDetailsOpen(true);
-                  }}
-                >
-                  <ListItemIcon>
-                    {getEventTypeIcon(event.type)}
-                  </ListItemIcon>
-                  <ListItemText
-                    primary={event.title}
-                    secondary={`${event.startTime} - ${event.endTime}`}
-                  />
-                </ListItem>
-              ))}
-              {getEventsForDate(new Date()).length === 0 && (
+              {getEventsForDate(new Date()).length > 0 ? (
+                getEventsForDate(new Date()).map((event) => (
+                  <ListItem
+                    key={event.id}
+                    sx={{
+                      borderLeft: `4px solid ${event.color}`,
+                      mb: 1,
+                      borderRadius: 1,
+                      backgroundColor: 'action.hover',
+                      cursor: 'pointer',
+                    }}
+                    onClick={() => {
+                      setSelectedEvent(event);
+                      setEventDetailsOpen(true);
+                    }}
+                  >
+                    <ListItemIcon>
+                      {getEventTypeIcon(event.type)}
+                    </ListItemIcon>
+                    <ListItemText
+                      primary={event.title}
+                      secondary={`${event.startTime} - ${event.endTime}`}
+                    />
+                  </ListItem>
+                ))
+              ) : (
                 <Typography variant="body2" color="text.secondary" textAlign="center">
                   No events today
                 </Typography>
@@ -666,97 +737,54 @@ const Calendar = () => {
           </CardContent>
         </Card>
 
-        {/* Floating Action Button */}
-        <Fab
-          color="primary"
-          aria-label="add event"
-          sx={{ position: 'fixed', bottom: 24, right: 24 }}
-          onClick={() => setCreateEventOpen(true)}
-        >
-          <Add />
-        </Fab>
-
         {/* Event Details Dialog */}
         <EventDetailsDialog />
 
         {/* Edit Event Dialog */}
-        <Dialog
-          open={editEventOpen}
-          onClose={() => setEditEventOpen(false)}
-          maxWidth="sm"
-          fullWidth
-        >
+        <Dialog open={editEventOpen} onClose={() => setEditEventOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Edit Event</DialogTitle>
           <DialogContent>
-            {editingEvent && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-                <TextField
-                  label="Event Title"
-                  fullWidth
-                  variant="outlined"
-                  value={editingEvent.title}
-                  onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
-                  required
-                />
-                <FormControl fullWidth>
-                  <InputLabel>Event Type</InputLabel>
-                  <Select 
-                    label="Event Type"
-                    value={editingEvent.type}
-                    onChange={(e) => setEditingEvent({...editingEvent, type: e.target.value})}
-                  >
-                    <MenuItem value="study">Study Session</MenuItem>
-                    <MenuItem value="class">Class</MenuItem>
-                    <MenuItem value="assignment">Assignment</MenuItem>
-                    <MenuItem value="exam">Exam</MenuItem>
-                    <MenuItem value="meeting">Meeting</MenuItem>
-                  </Select>
-                </FormControl>
-                <TextField
-                  label="Subject"
-                  fullWidth
-                  variant="outlined"
-                  value={editingEvent.subject}
-                  onChange={(e) => setEditingEvent({...editingEvent, subject: e.target.value})}
-                />
-                <DateTimePicker
-                  label="Start Date & Time"
-                  value={editingEvent.startDateTime}
-                  onChange={(newValue) => setEditingEvent({...editingEvent, startDateTime: newValue})}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                />
-                <DateTimePicker
-                  label="End Date & Time"
-                  value={editingEvent.endDateTime}
-                  onChange={(newValue) => setEditingEvent({...editingEvent, endDateTime: newValue})}
-                  renderInput={(params) => <TextField {...params} fullWidth />}
-                />
-                <TextField
-                  label="Description"
-                  multiline
-                  rows={3}
-                  fullWidth
-                  variant="outlined"
-                  value={editingEvent.description || ''}
-                  onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
-                />
-                <TextField
-                  label="Location"
-                  fullWidth
-                  variant="outlined"
-                  value={editingEvent.location || ''}
-                  onChange={(e) => setEditingEvent({...editingEvent, location: e.target.value})}
-                />
-              </Box>
-            )}
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Event Title"
+              fullWidth
+              variant="outlined"
+              value={editingEvent?.title || ''}
+              onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
+              sx={{ mb: 2 }}
+            />
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DateTimePicker
+                label="Start Date & Time"
+                value={editingEvent?.startDateTime || new Date()}
+                onChange={(newValue) => setEditingEvent({...editingEvent, startDateTime: newValue})}
+                renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 2 }} />}
+              />
+              <DateTimePicker
+                label="End Date & Time"
+                value={editingEvent?.endDateTime || new Date()}
+                onChange={(newValue) => setEditingEvent({...editingEvent, endDateTime: newValue})}
+                renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 2 }} />}
+              />
+            </LocalizationProvider>
+            <TextField
+              margin="dense"
+              label="Description"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              value={editingEvent?.description || ''}
+              onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
+              sx={{ mb: 2 }}
+            />
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setEditEventOpen(false)}>
-              Cancel
-            </Button>
+            <Button onClick={() => setEditEventOpen(false)}>Cancel</Button>
             <Button 
+              onClick={handleUpdateEvent} 
               variant="contained"
-              onClick={handleUpdateEvent}
               disabled={!editingEvent?.title?.trim()}
             >
               Update Event
@@ -840,12 +868,14 @@ const Calendar = () => {
                 onChange={(newValue) => setNewEvent({...newEvent, startDateTime: newValue})}
                 renderInput={(params) => <TextField {...params} fullWidth />}
               />
-              <DateTimePicker
-                label="End Date & Time"
-                value={newEvent.endDateTime}
-                onChange={(newValue) => setNewEvent({...newEvent, endDateTime: newValue})}
-                renderInput={(params) => <TextField {...params} fullWidth />}
-              />
+              <Box sx={{ mt: 2 }}>
+                <DateTimePicker
+                  label="End Date & Time"
+                  value={newEvent.endDateTime}
+                  onChange={(newValue) => setNewEvent({...newEvent, endDateTime: newValue})}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
+                />
+              </Box>
               <TextField
                 label="Description"
                 multiline
@@ -860,6 +890,7 @@ const Calendar = () => {
                 fullWidth
                 variant="outlined"
                 value={newEvent.location}
+                sx={{ mt: 1 }}
                 onChange={(e) => setNewEvent({...newEvent, location: e.target.value})}
               />
             </Box>
@@ -877,6 +908,188 @@ const Calendar = () => {
             </Button>
           </DialogActions>
         </Dialog>
+        {/* Google Calendar-like FAB */}
+        <Fab 
+          color="primary" 
+          aria-label="add" 
+          sx={{
+            position: 'fixed',
+            bottom: 24,
+            right: 24,
+            backgroundColor: googleColors.primary,
+            '&:hover': {
+              backgroundColor: '#1557b0',
+              boxShadow: '0 1px 2px 0 rgba(26,115,232,0.45), 0 1px 3px 1px rgba(26,115,232,0.3)'
+            },
+            boxShadow: '0 1px 2px 0 rgba(26,115,232,0.3), 0 1px 3px 1px rgba(26,115,232,0.15)'
+          }}
+          onClick={() => setCreateEventOpen(true)}
+        >
+          <Add />
+        </Fab>
+
+        {/* Event Details Dialog */}
+        <EventDetailsDialog />
+
+        {/* Edit Event Dialog */}
+        <Dialog open={editEventOpen} onClose={() => setEditEventOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle>Edit Event</DialogTitle>
+          <DialogContent>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="Event Title"
+              fullWidth
+              variant="outlined"
+              value={editingEvent?.title || ''}
+              onChange={(e) => setEditingEvent({...editingEvent, title: e.target.value})}
+              sx={{ mb: 2 }}
+            />
+            <LocalizationProvider dateAdapter={AdapterDateFns}>
+              <DateTimePicker
+                label="Start Date & Time"
+                value={editingEvent?.startDateTime || new Date()}
+                onChange={(newValue) => setEditingEvent({...editingEvent, startDateTime: newValue})}
+                renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 2 }} />}
+              />
+              <DateTimePicker
+                label="End Date & Time"
+                value={editingEvent?.endDateTime || new Date()}
+                onChange={(newValue) => setEditingEvent({...editingEvent, endDateTime: newValue})}
+                renderInput={(params) => <TextField {...params} fullWidth sx={{ mb: 2 }} />}
+              />
+            </LocalizationProvider>
+            <TextField
+              margin="dense"
+              label="Description"
+              fullWidth
+              variant="outlined"
+              multiline
+              rows={4}
+              value={editingEvent?.description || ''}
+              onChange={(e) => setEditingEvent({...editingEvent, description: e.target.value})}
+              sx={{ mb: 2 }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditEventOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleUpdateEvent} 
+              variant="contained"
+              disabled={!editingEvent?.title?.trim()}
+            >
+              Update Event
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Create Event Dialog */}
+        <Dialog
+          open={createEventOpen}
+            onClose={() => setCreateEventOpen(false)}
+            maxWidth="sm"
+            fullWidth
+          >
+            <DialogTitle>Create New Event</DialogTitle>
+            <DialogContent>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+                <TextField
+                  label="Event Title"
+                  fullWidth
+                  variant="outlined"
+                  value={newEvent.title}
+                  onChange={(e) => setNewEvent({...newEvent, title: e.target.value})}
+                  required
+                  error={!newEvent.title.trim()}
+                  helperText={!newEvent.title.trim() ? 'Title is required' : ''}
+                />
+                <FormControl fullWidth>
+                  <InputLabel>Event Type</InputLabel>
+                  <Select 
+                    label="Event Type"
+                    value={newEvent.type}
+                    onChange={(e) => setNewEvent({...newEvent, type: e.target.value})}
+                  >
+                    <MenuItem value="study">Study Session</MenuItem>
+                    <MenuItem value="review">Review</MenuItem>
+                    <MenuItem value="practice">Practice</MenuItem>
+                    <MenuItem value="exam">Exam</MenuItem>
+                    <MenuItem value="assignment">Assignment</MenuItem>
+                    <MenuItem value="other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+                <TextField
+                  label="Subject"
+                  fullWidth
+                  variant="outlined"
+                  value={newEvent.subject}
+                  onChange={(e) => setNewEvent({...newEvent, subject: e.target.value})}
+                  required
+                  error={!newEvent.subject.trim()}
+                  helperText={!newEvent.subject.trim() ? 'Subject is required' : ''}
+                />
+                <FormControl fullWidth>
+                  <InputLabel>Priority</InputLabel>
+                  <Select 
+                    label="Priority"
+                    value={newEvent.priority}
+                    onChange={(e) => setNewEvent({...newEvent, priority: e.target.value})}
+                  >
+                    <MenuItem value="low">Low</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="high">High</MenuItem>
+                    <MenuItem value="urgent">Urgent</MenuItem>
+                  </Select>
+                </FormControl>
+                <FormControl fullWidth>
+                  <InputLabel>Difficulty</InputLabel>
+                  <Select 
+                    label="Difficulty"
+                    value={newEvent.difficulty}
+                    onChange={(e) => setNewEvent({...newEvent, difficulty: e.target.value})}
+                  >
+                    <MenuItem value="easy">Easy</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="hard">Hard</MenuItem>
+                  </Select>
+                </FormControl>
+                <DateTimePicker
+                  label="Start Date & Time"
+                  value={newEvent.startDateTime}
+                  onChange={(newValue) => setNewEvent({...newEvent, startDateTime: newValue})}
+                  renderInput={(params) => <TextField {...params} fullWidth />}
+                />
+                <Box sx={{ mt: 2 }}>
+                  <DateTimePicker
+                    label="End Date & Time"
+                    value={newEvent.endDateTime}
+                    onChange={(newValue) => setNewEvent({...newEvent, endDateTime: newValue})}
+                    renderInput={(params) => <TextField {...params} fullWidth />}
+                  />
+                </Box>
+                <TextField
+                  label="Description"
+                  fullWidth
+                  variant="outlined"
+                  multiline
+                  rows={4}
+                  value={newEvent.description}
+                  onChange={(e) => setNewEvent({...newEvent, description: e.target.value})}
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setCreateEventOpen(false)}>Cancel</Button>
+              <Button 
+                onClick={handleCreateEvent} 
+                variant="contained"
+                disabled={!newEvent.title.trim() || !newEvent.subject.trim()}
+              >
+                Create Event
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
       </Box>
     </LocalizationProvider>
   );

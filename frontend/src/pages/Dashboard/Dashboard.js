@@ -193,71 +193,97 @@ const Dashboard = () => {
     toast.info('Redirecting to Analytics dashboard');
   };
 
-  const StatCard = ({ title, value, subtitle, icon, color, trend }) => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <Card sx={{ height: '100%', position: 'relative', overflow: 'visible' }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <Box>
-              <Typography variant="body2" color="text.secondary" gutterBottom>
-                {title}
-              </Typography>
-              <Typography variant="h4" fontWeight="bold" color={color}>
-                {value}
-              </Typography>
-              {subtitle && (
-                <Typography variant="body2" color="text.secondary">
-                  {subtitle}
+  const StatCard = ({ title, value, subtitle, icon, color, trend }) => {
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+      >
+        <Card sx={{ 
+          height: '100%', 
+          width: '100%',
+          position: 'relative',
+          overflow: 'visible',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
+        }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <Box>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  {title}
                 </Typography>
-              )}
-              {trend && (
-                <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                  <TrendingUp sx={{ fontSize: 16, color: 'success.main', mr: 0.5 }} />
-                  <Typography variant="caption" color="success.main">
-                    {trend}
+                <Typography variant="h4" fontWeight="bold" color={color}>
+                  {value}
+                </Typography>
+                {subtitle && (
+                  <Typography variant="body2" color="text.secondary">
+                    {subtitle}
                   </Typography>
-                </Box>
-              )}
+                )}
+                {trend && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
+                    <TrendingUp sx={{ fontSize: 16, color: 'success.main', mr: 0.5 }} />
+                    <Typography variant="caption" color="success.main">
+                      {trend}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+              <Avatar sx={{ backgroundColor: color, width: 56, height: 56 }}>
+                {icon}
+              </Avatar>
             </Box>
-            <Avatar sx={{ backgroundColor: color, width: 56, height: 56 }}>
-              {icon}
-            </Avatar>
-          </Box>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  };
 
   return (
-    <Box>
-      {/* Welcome Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-      >
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            {greeting}, {user?.name}! 👋
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Ready to continue your learning journey? Here's your progress overview.
-          </Typography>
-        </Box>
-      </motion.div>
+    <Box 
+      component="div"
+      sx={{
+        width: '100%',
+        maxWidth: '100%',
+        p: { xs: 2, sm: 3, md: 4 },
+        boxSizing: 'border-box',
+        mx: 'auto',
+        maxWidth: '1600px'
+      }}
+    >
+        {/* Content will be rendered here */}
+        {/* Welcome Section */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <Box sx={{ mb: 4, width: '100%' }}>
+            <Typography variant="h4" fontWeight="bold" gutterBottom>
+              {greeting}, {user?.name}! 👋
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Ready to continue your learning journey? Here's your progress overview.
+            </Typography>
+          </Box>
+        </motion.div>
 
-      {/* Stats Cards */}
-      <Grid item xs={12}>
+        {/* Stats Cards */}
         {loading ? (
           <Box display="flex" justifyContent="center" py={4}>
             <CircularProgress />
           </Box>
         ) : (
-          <Grid container spacing={3}>
+          <Grid container spacing={3} sx={{ 
+            width: '100%',
+            m: 0,
+            '& > .MuiGrid-item': {
+              '& > div': {
+                height: '100%',
+              }
+            }
+          }}>
             <Grid item xs={12} sm={6} md={3}>
               <StatCard
                 title="Total Tasks"
@@ -300,17 +326,26 @@ const Dashboard = () => {
             </Grid>
           </Grid>
         )}
-      </Grid>
-
-      <Grid container spacing={3}>
-        {/* Study Progress Chart */}
-        <Grid item xs={12} md={8}>
+        {/* Main Content */}
+        <Grid container spacing={3} sx={{ 
+          width: '100%',
+          m: 0,
+          mt: 3,
+          '& > .MuiGrid-item': {
+            '& > div': {
+              height: '100%',
+              mb: 2
+            }
+          }
+        }}>
+          {/* Study Progress Chart */}
+          <Grid item xs={12} lg={8} sx={{ width: '100%' }}>
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
           >
-            <Card>
+            <Card sx={{ width: '100%', height: '100%' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
                   <Typography variant="h6" fontWeight="600">
@@ -341,13 +376,13 @@ const Dashboard = () => {
         </Grid>
 
         {/* Subject Distribution */}
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} lg={4}>
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Card sx={{ height: '100%' }}>
+            <Card sx={{ width: '100%', height: '100%' }}>
               <CardContent>
                 <Typography variant="h6" fontWeight="600" gutterBottom>
                   Subject Distribution
@@ -403,7 +438,7 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.4 }}
           >
-            <Card>
+            <Card sx={{ width: '100%', boxSizing: 'border-box' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" fontWeight="600">
@@ -481,7 +516,7 @@ const Dashboard = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.5 }}
           >
-            <Card>
+            <Card sx={{ width: '100%', boxSizing: 'border-box' }}>
               <CardContent>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
                   <Typography variant="h6" fontWeight="600">

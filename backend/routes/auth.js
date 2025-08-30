@@ -154,28 +154,45 @@ router.post('/login', [
 // @access  Public
 router.post('/google', async (req, res) => {
   try {
+    console.log('Google auth request body:', req.body);
+    
     const { googleId, email, name, avatar } = req.body;
+    
+    if (!googleId || !email) {
+      console.error('Missing required fields in Google auth request');
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Missing required fields: googleId and email are required' 
+      });
+    }
 
-    // Find existing user or create new one
+    // Find existing user by googleId or email
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
+    console.log('Found user in database:', user ? 'Yes' : 'No');
 
     if (user) {
+      console.log('Existing user found, checking Google ID');
       // Update Google ID if not set
       if (!user.googleId) {
+        console.log('Adding Google ID to existing user');
         user.googleId = googleId;
         user.isEmailVerified = true;
         await user.save();
       }
     } else {
+      console.log('Creating new user with Google account');
       // Create new user
       user = new User({
         googleId,
         email,
-        name,
-        avatar,
+        name: name || email.split('@')[0], // Fallback to email prefix if name not provided
+        avatar: avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || email.split('@')[0])}&background=random`,
         isEmailVerified: true
       });
+      
+      console.log('New user data before save:', user);
       await user.save();
+      console.log('New user saved successfully');
     }
 
     // Generate token

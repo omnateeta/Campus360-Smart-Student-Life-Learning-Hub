@@ -50,54 +50,116 @@ import AuthTest from './pages/AuthTest';
 const theme = createTheme({
   palette: {
     primary: {
-      main: '#3B82F6',
-      light: '#60A5FA',
-      dark: '#1D4ED8',
+      main: '#3B82F6',    // Blue-500
+      light: '#60A5FA',   // Blue-400
+      dark: '#2563EB',    // Blue-600
+      contrastText: '#FFFFFF',
     },
     secondary: {
-      main: '#8B5CF6',
-      light: '#A78BFA',
-      dark: '#7C3AED',
+      main: '#8B5CF6',    // Violet-500
+      light: '#A78BFA',   // Violet-400
+      dark: '#7C3AED',    // Violet-600
+      contrastText: '#FFFFFF',
+    },
+    error: {
+      main: '#EF4444',    // Red-500
+      light: '#F87171',   // Red-400
+      dark: '#DC2626',    // Red-600
+    },
+    warning: {
+      main: '#F59E0B',    // Amber-500
+      light: '#FBBF24',   // Amber-400
+      dark: '#D97706',    // Amber-600
+    },
+    info: {
+      main: '#3B82F6',    // Blue-500
+      light: '#60A5FA',   // Blue-400
+      dark: '#2563EB',    // Blue-600
+    },
+    success: {
+      main: '#10B981',    // Emerald-500
+      light: '#34D399',   // Emerald-400
+      dark: '#059669',    // Emerald-600
     },
     background: {
-      default: '#F8FAFC',
-      paper: '#FFFFFF',
+      default: '#F8FAFC',  // Cool Gray-50
+      paper: '#FFFFFF',    // White
     },
     text: {
-      primary: '#1E293B',
-      secondary: '#64748B',
+      primary: '#1E293B',  // Slate-800
+      secondary: '#64748B', // Slate-500
+      disabled: '#94A3B8', // Slate-400
     },
+    divider: '#E2E8F0',   // Slate-200
   },
   typography: {
-    fontFamily: '"Inter", "Roboto", "Helvetica", "Arial", sans-serif',
+    fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
     h1: {
-      fontWeight: 700,
+      fontWeight: 800,
+      fontSize: '2.5rem',
+      lineHeight: 1.2,
+      letterSpacing: '-0.02em',
     },
     h2: {
-      fontWeight: 600,
+      fontWeight: 700,
+      fontSize: '2rem',
+      lineHeight: 1.25,
+      letterSpacing: '-0.01em',
     },
     h3: {
-      fontWeight: 600,
+      fontWeight: 700,
+      fontSize: '1.75rem',
+      lineHeight: 1.3,
     },
     h4: {
       fontWeight: 600,
+      fontSize: '1.5rem',
+      lineHeight: 1.35,
     },
     h5: {
-      fontWeight: 500,
+      fontWeight: 600,
+      fontSize: '1.25rem',
+      lineHeight: 1.4,
     },
     h6: {
-      fontWeight: 500,
+      fontWeight: 600,
+      fontSize: '1.125rem',
+      lineHeight: 1.45,
+    },
+    subtitle1: {
+      fontSize: '1rem',
+      lineHeight: 1.5,
+      color: 'text.secondary',
+    },
+    body1: {
+      fontSize: '1rem',
+      lineHeight: 1.6,
+    },
+    body2: {
+      fontSize: '0.875rem',
+      lineHeight: 1.5,
+      color: 'text.secondary',
+    },
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+      letterSpacing: '0.01em',
     },
   },
   shape: {
-    borderRadius: 12,
+    borderRadius: 8,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           textTransform: 'none',
-          fontWeight: 500,
+          fontWeight: 600,
+          padding: '8px 16px',
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          },
           borderRadius: 8,
         },
       },

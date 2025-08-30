@@ -22,9 +22,10 @@ import {
   School,
   Chat,
   EmojiEvents,
-  TrendingUp,
 } from '@mui/icons-material';
 import { useAuth } from '../../contexts/AuthContext';
+
+const drawerWidth = 280;
 
 const menuItems = [
   {
@@ -80,19 +81,48 @@ const Sidebar = ({ onClose }) => {
   };
 
   return (
-    <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      {/* Logo and Brand */}
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <School sx={{ fontSize: 40, color: '#3b82f6', mb: 1 }} />
-        <Typography variant="h6" fontWeight="bold" color="white">
-          AI Study Planner
+    <Box 
+      component="div"
+      sx={{ 
+        width: drawerWidth,
+        height: '100vh',
+        position: 'fixed',
+        left: 0,
+        top: 0,
+        overflowY: 'auto',
+        backgroundColor: '#1e293b',
+        color: 'rgba(255, 255, 255, 0.9)',
+        '& .MuiDrawer-paper': {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+          backgroundColor: '#1e293b',
+          color: 'rgba(255, 255, 255, 0.9)',
+          border: 'none',
+          position: 'relative',
+        },
+      }}
+    >
+      {/* Logo and Title */}
+      <Box sx={{ py: 3, textAlign: 'center' }}>
+        <School sx={{ 
+          fontSize: 48,
+          color: 'white',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          borderRadius: '50%',
+          p: 1,
+          mx: 'auto',
+          display: 'block',
+          width: 'fit-content',
+          mb: 1
+        }} />
+        <Typography variant="h6" color="white" fontWeight="bold">
+          Campus360
         </Typography>
-        <Typography variant="caption" color="rgba(255,255,255,0.7)">
-          Smart Learning Platform
+        <Typography variant="caption" color="rgba(255, 255, 255, 0.7)">
+          Smart Student Life & Learning Hub
         </Typography>
       </Box>
-
-      <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
+      <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)' }} />
 
       {/* User Profile Section */}
       <Box sx={{ p: 2, textAlign: 'center' }}>
@@ -122,7 +152,7 @@ const Sidebar = ({ onClose }) => {
             }}
           />
           <Chip
-            icon={<TrendingUp />}
+            icon={<EmojiEvents />}
             label={`${user?.gamification?.streaks?.current || 0} days`}
             size="small"
             sx={{
@@ -137,67 +167,62 @@ const Sidebar = ({ onClose }) => {
       <Divider sx={{ borderColor: 'rgba(255,255,255,0.1)' }} />
 
       {/* Navigation Menu */}
-      <List sx={{ flexGrow: 1, px: 1 }}>
+      <List sx={{ py: 1, px: 1 }}>
         {menuItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          
+          const isActive = location.pathname.startsWith(item.path);
           return (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
+            <ListItem 
+              key={item.text} 
+              disablePadding
+              sx={{ 
+                mb: 0.5,
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                },
+                backgroundColor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                borderRadius: 1,
+                transition: 'all 0.2s ease-in-out',
+              }}
+            >
               <ListItemButton
                 onClick={() => handleNavigation(item.path)}
                 sx={{
-                  borderRadius: 2,
-                  mx: 1,
-                  backgroundColor: isActive ? 'rgba(59, 130, 246, 0.2)' : 'transparent',
-                  color: isActive ? '#60a5fa' : 'rgba(255,255,255,0.8)',
+                  py: 1.1,
+                  px: 2,
+                  borderRadius: 1,
                   '&:hover': {
-                    backgroundColor: isActive 
-                      ? 'rgba(59, 130, 246, 0.3)' 
-                      : 'rgba(255,255,255,0.1)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
                   },
                 }}
               >
-                <ListItemIcon
-                  sx={{
-                    color: isActive ? '#60a5fa' : 'rgba(255,255,255,0.8)',
-                    minWidth: 40,
+                <ListItemIcon 
+                  sx={{ 
+                    minWidth: 38,
+                    color: isActive ? 'white' : 'rgba(255, 255, 255, 0.7)',
+                    '& svg': {
+                      fontSize: '1.25rem',
+                    }
                   }}
                 >
                   {item.icon}
                 </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
+                <ListItemText 
+                  primary={item.text} 
                   primaryTypographyProps={{
-                    fontWeight: isActive ? 600 : 400,
                     fontSize: '0.9rem',
+                    fontWeight: isActive ? 600 : 500,
+                    letterSpacing: '0.3px',
+                    lineHeight: 1.3,
+                    color: isActive ? 'white' : 'rgba(255, 255, 255, 0.9)',
+                    transition: 'all 0.2s ease-in-out',
                   }}
+                  sx={{ my: 0 }}
                 />
               </ListItemButton>
             </ListItem>
           );
         })}
       </List>
-
-      {/* Footer */}
-      <Box sx={{ p: 2, textAlign: 'center' }}>
-        <Typography 
-          variant="caption" 
-          color="rgba(255,255,255,0.8)"
-          sx={{ fontWeight: 500, display: 'block', mb: 0.5 }}
-        >
-          Developed by Omnateeta V U
-        </Typography>
-        <Typography 
-          variant="caption" 
-          color="rgba(255,255,255,0.6)"
-          sx={{ fontStyle: 'italic', display: 'block', mb: 1, fontSize: '0.65rem' }}
-        >
-          Computer Science & Engineering Student
-        </Typography>
-        <Typography variant="caption" color="rgba(255,255,255,0.5)">
-          © 2025 AI Study Planner
-        </Typography>
-      </Box>
     </Box>
   );
 };

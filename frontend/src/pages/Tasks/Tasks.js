@@ -31,6 +31,7 @@ const Tasks = () => {
   });
   const [showDebug, setShowDebug] = useState(false);
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [tasksData, setTasksData] = useState(null); // Local state for tasks data
   const [newTask, setNewTask] = useState({
     title: '',
     description: '',
@@ -48,13 +49,59 @@ const Tasks = () => {
   });
 
   // API hooks for data fetching and mutations
-  const { data: tasksData, loading, error, refetch } = useApi(() => 
-    tasksService.getTasks(filters), [filters]
+  const { loading, error, refetch } = useApi(
+    async () => {
+      try {
+        console.log('Fetching tasks with filters:', filters);
+        const response = await tasksService.getTasks(filters);
+        console.log('Tasks API response:', response);
+        
+        // Handle both direct array response and { tasks: [] } format
+        const data = Array.isArray(response) ? { tasks: response } : response;
+        
+        // Update local state with the new data
+        setTasksData(data);
+        return data;
+      } catch (err) {
+        console.error('Error fetching tasks:', err);
+        toast.error('Failed to load tasks');
+        setTasksData({ tasks: [] }); // Set empty tasks on error
+        return { tasks: [] };
+      }
+    },
+    [filters],
+    { manual: false }
   );
-  const { mutate: createTask, loading: creating } = useMutation(tasksService.createTask);
+  
+  // Debug: Log when tasksData changes
+  useEffect(() => {
+    console.log('Tasks data updated:', {
+      tasksData,
+      tasksCount: tasksData?.tasks?.length || 0,
+      hasData: !!tasksData,
+      loading,
+      filters
+    });
+  }, [tasksData, loading, filters]);
+  
+  // Mutation for creating tasks
+  const { mutate: createTask, loading: creating } = useMutation(tasksService.createTask, {
+    onSuccess: () => {
+      // Force refetch after successful task creation
+      refetch().then(() => {
+        toast.success('Task created successfully!');
+      }).catch(err => {
+        console.error('Error refetching tasks:', err);
+      });
+    },
+    onError: (error) => {
+      console.error('Task creation error:', error);
+      toast.error(error.response?.data?.message || 'Failed to create task');
+    }
+  });
 
-  // Extract tasks from API response
-  const tasks = tasksData?.tasks || [];
+  // Extract tasks from API response - handle both direct array and { tasks: [] } formats
+  const tasks = Array.isArray(tasksData) ? tasksData : (tasksData?.tasks || []);
   
   // Authentication debugging (FIRST PRIORITY)
   useEffect(() => {
@@ -124,7 +171,7 @@ const Tasks = () => {
         type: 'assignment',
         priority: 'medium',
         difficulty: 'easy',
-        scheduledDate: new Date().toISOString(),
+        scheduledDate: new Date().toISOString().split('T')[0], // Format as YYYY-MM-DD
         scheduledTime: {
           start: '10:00',
           end: '10:30'
@@ -135,45 +182,39 @@ const Tasks = () => {
       console.log('Task data prepared:', testTask);
       console.log('Calling createTask mutation...');
       
-      const result = await createTask(testTask);
+      // Clear any existing tasks data to force a refresh
+      setTasksData(null);
+      
+      // Use the createTask mutation which has built-in refetch
+      await createTask(testTask);
+      
+      // Show success message (refetch will be handled by the mutation's onSuccess)
       console.log('✅ Task creation successful!');
-      console.log('Task creation result:', result);
+      toast.success('Test task created successfully!');
       
-      // Always show success message in debug mode
-      toast.success('✅ Test task created successfully!');
+      // Force a hard refresh of the tasks list by updating filters
+      console.log('Triggering hard refresh of tasks...');
+      setFilters(prev => ({
+        ...prev,
+        _refresh: Date.now() // Add a timestamp to force refetch
+      }));
       
-      // Force refetch of tasks
-      console.log('Triggering refetch in 500ms...');
-      setTimeout(async () => {
-        try {
-          console.log('Refetching tasks...');
-          const refetchResult = await refetch();
-          console.log('✅ Refetch successful!');
-          console.log('Refetch result:', refetchResult);
-          console.log('Tasks after refetch:', refetchResult?.data?.tasks?.length || 0);
-          
-          if (refetchResult?.data?.tasks?.length > 0) {
-            console.log('✅ Tasks found after refetch:', refetchResult.data.tasks.length);
-          } else {
-            console.log('⚠️ No tasks found after refetch');
-          }
-        } catch (refetchError) {
-          console.error('❌ Refetch error:', refetchError);
-          toast.error('Failed to refresh task list');
-        }
+      // Also do a direct refetch after a short delay
+      setTimeout(() => {
+        refetch().catch(err => {
+          console.error('Error in refetch after task creation:', err);
+        });
       }, 500);
       
     } catch (err) {
-      console.error('❌ CREATE TASK ERROR:', err);
-      console.error('Error message:', err.message);
-      console.error('Error response:', err.response?.data);
-      console.error('Error status:', err.response?.status);
+      console.error('❌ Task creation failed:', err);
+      console.error('Error details:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      });
       
-      // Always show error message
-      const errorMessage = err.response?.data?.message || err.message || 'Failed to create task';
-      toast.error(`❌ ${errorMessage}`);
-      
-      // Additional debugging info
+      // Show appropriate error message based on error type
       if (err.response?.status === 401) {
         console.error('❌ Authentication error - user might not be logged in');
         toast.error('Authentication required. Please log in.');
@@ -183,10 +224,13 @@ const Tasks = () => {
       } else if (err.response?.status >= 500) {
         console.error('❌ Server error - backend might be down');
         toast.error('Server error. Please try again later.');
+      } else {
+        const errorMessage = err.response?.data?.message || err.message || 'Failed to create task';
+        toast.error(`❌ ${errorMessage}`);
       }
+      
+      console.log('=== CREATE TEST TASK COMPLETED ===');
     }
-    
-    console.log('=== CREATE TEST TASK COMPLETED ===');
   };
 
   // Handle opening create task modal
@@ -272,21 +316,31 @@ const Tasks = () => {
       
       console.log('📤 Sending task data to backend:', taskData);
       
-      const result = await createTask(taskData);
-      console.log('✅ Task created successfully:', result);
+      // Create the task
+      await createTask(taskData);
+      console.log('✅ Task created successfully');
       
+      // Show success message
       toast.success('✅ Task created successfully!');
+      
+      // Close the modal and reset the form
       handleCloseModal();
       
-      // Refetch tasks
+      // Force a hard refresh of the task list by updating the filters
+      // This will trigger a re-fetch due to the filters dependency in useApi
+      const currentFilters = { ...filters };
+      setFilters({ ...currentFilters, refresh: Date.now() });
+      
+      // Also do a direct refetch as a fallback
       setTimeout(async () => {
         try {
-          await refetch();
-          console.log('✅ Tasks refreshed after creation');
+          const result = await refetch();
+          console.log('✅ Tasks refreshed after creation:', result);
         } catch (refetchError) {
           console.error('❌ Refetch error:', refetchError);
+          toast.error('Task created but failed to refresh the list');
         }
-      }, 500);
+      }, 300);
       
     } catch (err) {
       console.error('❌ Create task error:', err);

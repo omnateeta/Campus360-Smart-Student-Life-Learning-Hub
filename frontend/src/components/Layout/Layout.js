@@ -1,31 +1,23 @@
 import React, { useState } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Drawer,
   AppBar,
   Toolbar,
-  List,
+  Box,
+  Drawer,
+  IconButton,
   Typography,
   Divider,
-  IconButton,
   Avatar,
   Menu,
   MenuItem,
   Badge,
   useTheme,
   useMediaQuery,
+  Tooltip,
 } from '@mui/material';
 import {
   Menu as MenuIcon,
-  Dashboard,
-  Assignment,
-  CalendarToday,
-  Timer,
-  Notes,
-  Analytics,
-  School,
-  Chat,
   AccountCircle,
   Notifications,
   Settings,
@@ -87,16 +79,17 @@ const Layout = () => {
   };
 
   return (
-    <Box sx={{ display: 'flex' }}>
-      {/* App Bar */}
-      <AppBar
+    <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative' }}>
+      {/* Top Navigation Bar */}
+      <AppBar 
         position="fixed"
-        sx={{
-          width: { md: `calc(100% - ${drawerWidth}px)` },
+        sx={{ 
+          width: { xs: '100%', md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          backgroundColor: 'white',
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          backgroundColor: 'background.paper',
           color: 'text.primary',
-          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
         }}
       >
         <Toolbar>
@@ -105,149 +98,205 @@ const Layout = () => {
             aria-label="open drawer"
             edge="start"
             onClick={handleDrawerToggle}
-            sx={{ mr: 2, display: { md: 'none' } }}
+            sx={{ mr: 2, display: { md: 'none' }, color: 'text.primary' }}
           >
             <MenuIcon />
           </IconButton>
-
+          
           <Typography variant="h6" noWrap component="div" sx={{ flexGrow: 1 }}>
-            AI Study Planner
+            Campus360
           </Typography>
-
-          {/* Connection Status */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              mr: 2,
-              px: 2,
-              py: 0.5,
-              borderRadius: 1,
-              backgroundColor: connected ? 'success.light' : 'error.light',
-              color: connected ? 'success.contrastText' : 'error.contrastText',
-            }}
-          >
-            <Box
-              sx={{
-                width: 8,
-                height: 8,
-                borderRadius: '50%',
-                backgroundColor: connected ? 'success.main' : 'error.main',
-                mr: 1,
-              }}
-            />
-            <Typography variant="caption">
-              {connected ? 'Connected' : 'Offline'}
-            </Typography>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Tooltip title="Notifications">
+              <IconButton 
+                onClick={handleNotificationOpen}
+                color="inherit"
+                size="large"
+                sx={{ color: 'text.primary' }}
+              >
+                <Badge badgeContent={unreadNotifications} color="error">
+                  <Notifications />
+                </Badge>
+              </IconButton>
+            </Tooltip>
+            
+            <Tooltip title="Account settings">
+              <IconButton
+                onClick={handleProfileMenuOpen}
+                color="inherit"
+                size="large"
+                sx={{ ml: 1 }}
+              >
+                <Avatar 
+                  alt={user?.name || 'User'} 
+                  src={user?.avatar} 
+                  sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}
+                >
+                  {user?.name?.[0]?.toUpperCase() || 'U'}
+                </Avatar>
+              </IconButton>
+            </Tooltip>
           </Box>
-
-          {/* Notifications */}
-          <IconButton
-            color="inherit"
-            onClick={handleNotificationOpen}
-            sx={{ mr: 1 }}
-          >
-            <Badge badgeContent={unreadNotifications} color="error">
-              <Notifications />
-            </Badge>
-          </IconButton>
-
-          {/* Profile Menu */}
-          <IconButton
-            onClick={handleProfileMenuOpen}
-            sx={{ p: 0 }}
-          >
-            <Avatar
-              src={user?.avatar}
-              alt={user?.name}
-              sx={{ width: 40, height: 40 }}
-            >
-              {user?.name?.charAt(0).toUpperCase()}
-            </Avatar>
-          </IconButton>
-
-          <Menu
-            anchorEl={anchorEl}
-            open={Boolean(anchorEl)}
-            onClose={handleProfileMenuClose}
-            onClick={handleProfileMenuClose}
-            PaperProps={{
-              elevation: 3,
-              sx: {
-                overflow: 'visible',
-                filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
-                mt: 1.5,
-                '& .MuiAvatar-root': {
-                  width: 32,
-                  height: 32,
-                  ml: -0.5,
-                  mr: 1,
-                },
-              },
-            }}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-          >
-            <MenuItem onClick={handleProfileClick}>
-              <AccountCircle sx={{ mr: 2 }} />
-              Profile
-            </MenuItem>
-            <MenuItem onClick={handleSettingsClick}>
-              <Settings sx={{ mr: 2 }} />
-              Settings
-            </MenuItem>
-            <Divider />
-            <MenuItem onClick={handleLogout}>
-              <Logout sx={{ mr: 2 }} />
-              Logout
-            </MenuItem>
-          </Menu>
         </Toolbar>
       </AppBar>
 
       {/* Sidebar */}
       <Box
         component="nav"
-        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+        sx={{ 
+          width: { md: drawerWidth }, 
+          flexShrink: { md: 0 },
+          zIndex: 1200,
+          display: { xs: 'none', md: 'block' }
+        }}
+        aria-label="mailbox folders"
       >
         <Drawer
-          variant={isMobile ? 'temporary' : 'permanent'}
-          open={isMobile ? mobileOpen : true}
-          onClose={handleDrawerToggle}
-          ModalProps={{
-            keepMounted: true, // Better open performance on mobile.
-          }}
+          variant="permanent"
           sx={{
-            '& .MuiDrawer-paper': {
-              boxSizing: 'border-box',
+            '& .MuiDrawer-paper': { 
+              boxSizing: 'border-box', 
               width: drawerWidth,
+              border: 'none',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              height: '100vh',
+              overflowY: 'auto',
               backgroundColor: '#1e293b',
               color: 'white',
             },
           }}
+          open
         >
-          <Sidebar onClose={() => setMobileOpen(false)} />
+          <Sidebar />
         </Drawer>
       </Box>
+
+      {/* Mobile Menu */}
+      <Drawer
+        variant="temporary"
+        open={mobileOpen}
+        onClose={handleDrawerToggle}
+        ModalProps={{
+          keepMounted: true, // Better open performance on mobile.
+        }}
+        sx={{
+          display: { xs: 'block', md: 'none' },
+          '& .MuiDrawer-paper': { 
+            boxSizing: 'border-box', 
+            width: drawerWidth,
+            border: 'none',
+            backgroundColor: '#1e293b',
+            color: 'white',
+          },
+        }}
+      >
+        <Sidebar onClose={handleDrawerToggle} />
+      </Drawer>
 
       {/* Main Content */}
       <Box
         component="main"
         sx={{
           flexGrow: 1,
-          width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: 8,
-          backgroundColor: '#f8fafc',
-          minHeight: 'calc(100vh - 64px)',
+          width: '100%',
+          minHeight: '100vh',
           display: 'flex',
           flexDirection: 'column',
+          backgroundColor: 'background.default',
         }}
       >
-        <Box sx={{ flexGrow: 1, p: 3 }}>
-          <Outlet />
+        <Box sx={{ 
+          flex: 1,
+          width: '100%',
+          maxWidth: '100%',
+          mx: 'auto',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'relative',
+          zIndex: 1,
+          pt: { xs: '56px', md: '64px' }, // Adjusted for mobile header
+          px: { xs: 2, sm: 3, md: 4 },
+          backgroundColor: 'background.default',
+          '& > *': {
+            maxWidth: '100%',
+            width: '100%',
+            mx: 'auto',
+          },
+          '& .MuiContainer-root': {
+            px: { xs: 0, sm: 2 },
+            maxWidth: '100%',
+          },
+          '& .MuiGrid-container': {
+            width: '100%',
+            mx: 0,
+          }
+        }}>
+          <Box sx={{ 
+            width: '100%',
+            maxWidth: '1440px',
+            mx: 'auto',
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <Outlet />
+          </Box>
         </Box>
         <Footer />
       </Box>
+
+      {/* Profile Menu */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleProfileMenuClose}
+        onClick={handleProfileMenuClose}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            overflow: 'visible',
+            filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+            mt: 1.5,
+            '& .MuiAvatar-root': {
+              width: 32,
+              height: 32,
+              ml: -0.5,
+              mr: 1,
+            },
+            '&:before': {
+              content: '""',
+              display: 'block',
+              position: 'absolute',
+              top: 0,
+              right: 14,
+              width: 10,
+              height: 10,
+              bgcolor: 'background.paper',
+              transform: 'translateY(-50%) rotate(45deg)',
+              zIndex: 0,
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={handleProfileClick}>
+          <AccountCircle sx={{ mr: 2 }} />
+          Profile
+        </MenuItem>
+        <MenuItem onClick={handleSettingsClick}>
+          <Settings sx={{ mr: 2 }} />
+          Settings
+        </MenuItem>
+        <Divider />
+        <MenuItem onClick={handleLogout}>
+          <Logout sx={{ mr: 2 }} />
+          Logout
+        </MenuItem>
+      </Menu>
 
       {/* Notification Center */}
       <NotificationCenter

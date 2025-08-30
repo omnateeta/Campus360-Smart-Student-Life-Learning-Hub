@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
+import { toast } from 'react-toastify';
 import {
   Box,
   Card,
@@ -36,12 +37,73 @@ const Register = () => {
 
   const { register, googleLogin, loading, error, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || '/dashboard';
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard', { replace: true });
+      navigate(from, { replace: true });
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, from]);
+
+  const handleGoogleLogin = async (response) => {
+    try {
+      console.log('Google response:', response);
+      
+      // Decode the JWT token from Google
+      const { credential } = response;
+      console.log('Google credential:', credential);
+      
+      const decoded = JSON.parse(atob(credential.split('.')[1]));
+      console.log('Decoded Google token:', decoded);
+      
+      // Format the data to match what the backend expects
+      const googleUserData = {
+        googleId: decoded.sub,
+        email: decoded.email,
+        name: decoded.name,
+        avatar: decoded.picture
+      };
+      
+      console.log('Sending to backend:', googleUserData);
+      
+      const result = await googleLogin(googleUserData);
+      console.log('Backend response:', result);
+      
+      if (result.success) {
+        toast.success('Successfully signed in with Google');
+        navigate(from, { replace: true });
+      }
+    } catch (error) {
+      console.error('Google login error:', error);
+      toast.error(`Failed to sign in with Google: ${error.message}`);
+    }
+  };
+
+  // Initialize Google Sign-In
+  useEffect(() => {
+    // Load Google Identity Services script
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.defer = true;
+    document.body.appendChild(script);
+
+    script.onload = () => {
+      if (window.google) {
+        window.google.accounts.id.initialize({
+          client_id: '413104715074-475d3dqaii0kek5oqgp001igjfir5mpv.apps.googleusercontent.com',
+          callback: handleGoogleLogin,
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+      }
+    };
+
+    return () => {
+      document.body.removeChild(script);
+    };
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -107,12 +169,6 @@ const Register = () => {
     }
   };
 
-  const handleGoogleLogin = async (response) => {
-    const result = await googleLogin(response);
-    if (result.success) {
-      navigate('/dashboard', { replace: true });
-    }
-  };
 
   return (
     <Container maxWidth="sm">
@@ -259,19 +315,33 @@ const Register = () => {
                   </Typography>
                 </Divider>
 
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  size="large"
-                  startIcon={<Google />}
-                  sx={{ mb: 3, py: 1.5 }}
-                  onClick={() => {
-                    // Google OAuth integration would go here
-                    console.log('Google signup clicked');
+                <div
+                  id="googleSignInButton"
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    marginBottom: '24px'
                   }}
                 >
-                  Continue with Google
-                </Button>
+                  <div
+                    id="g_id_onload"
+                    data-client_id="413104715074-475d3dqaii0kek5oqgp001igjfir5mpv.apps.googleusercontent.com"
+                    data-context="signup"
+                    data-ux_mode="popup"
+                    data-callback={handleGoogleLogin}
+                    data-auto_prompt="false"
+                  />
+                  <div
+                    className="g_id_signin"
+                    data-type="standard"
+                    data-shape="rectangular"
+                    data-theme="outline"
+                    data-text="continue_with"
+                    data-size="large"
+                    data-logo_alignment="left"
+                    data-width="100%"
+                  />
+                </div>
 
                 <Box textAlign="center">
                   <Typography variant="body2" color="text.secondary">

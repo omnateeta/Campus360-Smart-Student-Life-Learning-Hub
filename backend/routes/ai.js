@@ -1,5 +1,5 @@
 const express = require('express');
-const OpenAI = require('openai');
+const { OpenAI } = require('openai');
 const auth = require('../middleware/auth');
 const StudyPlan = require('../models/StudyPlan');
 const User = require('../models/User');
@@ -10,6 +10,22 @@ const router = express.Router();
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+
+// Helper function to call OpenAI API
+async function generateResponse(prompt) {
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+    return completion.choices[0].message.content;
+  } catch (error) {
+    console.error('OpenAI API Error:', error);
+    throw new Error('Failed to get response from AI service');
+  }
+}
 
 // @route   POST /api/ai/generate-plan
 // @desc    Generate AI study plan
@@ -143,11 +159,31 @@ router.post('/generate-plan', auth, async (req, res) => {
 // @desc    Chat with AI study assistant
 // @access  Private
 router.post('/chat', auth, async (req, res) => {
+  const startTime = Date.now();
+  
   try {
+    console.log('Received chat request:', { 
+      body: req.body,
+      headers: req.headers,
+      timestamp: new Date().toISOString()
+    });
+
     const { message, context } = req.body;
     
     if (!message) {
+      console.log('Empty message received');
       return res.status(400).json({ message: 'Message is required' });
+    }
+
+    // Validate OpenAI API key
+    if (!process.env.OPENAI_API_KEY) {
+      const error = new Error('OpenAI API key not configured');
+      console.error('Configuration Error:', error.message);
+      return res.status(500).json({ 
+        message: 'AI service is currently unavailable',
+        error: 'Configuration error',
+        details: 'OpenAI API key not configured'
+      });
     }
 
     const user = req.userDoc;
@@ -156,42 +192,53 @@ router.post('/chat', auth, async (req, res) => {
     You are an AI study assistant helping students with their academic goals. 
     
     Student context:
-    - Name: ${user.name}
-    - Study preferences: ${JSON.stringify(user.studyPreferences)}
-    - Current level: ${user.gamification.level}
-    - Study streak: ${user.gamification.streaks.current} days
+    - Name: ${user?.name || 'Student'}
+    - Study preferences: ${user?.studyPreferences ? JSON.stringify(user.studyPreferences) : 'Not specified'}
+    - Current level: ${user?.gamification?.level || 1}
+    - Study streak: ${user?.gamification?.streaks?.current || 0} days
     
     Additional context: ${context || 'None'}
     
     Provide helpful, encouraging, and practical study advice. Keep responses concise but informative.
     `;
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-3.5-turbo",
-      messages: [
-        {
-          role: "system",
-          content: systemPrompt
-        },
-        {
-          role: "user",
-          content: message
-        }
-      ],
-      temperature: 0.8,
-      max_tokens: 500
+    console.log('Sending request to Google AI...');
+    
+    const fullPrompt = `${systemPrompt}\n\nUser: ${message}\nAssistant:`;
+    const aiResponse = await generateResponse(fullPrompt);
+    const responseTime = Date.now() - startTime;
+    
+    console.log('AI Response received:', {
+      responseTime: `${responseTime}ms`,
+      timestamp: new Date().toISOString()
     });
-
-    const aiResponse = completion.choices[0].message.content;
 
     res.json({
       message: 'AI response generated',
-      response: aiResponse
+      response: aiResponse,
+      responseTime: `${responseTime}ms`
     });
-
   } catch (error) {
-    console.error('AI chat error:', error);
-    res.status(500).json({ message: 'Failed to get AI response' });
+    const errorTime = Date.now() - startTime;
+    console.error('AI Chat Error:', {
+      error: error.message,
+      stack: error.stack,
+      response: error.response?.data,
+      request: {
+        method: req.method,
+        url: req.originalUrl,
+        body: req.body,
+        headers: req.headers
+      },
+      timestamp: new Date().toISOString(),
+      responseTime: `${errorTime}ms`
+    });
+    
+    res.status(500).json({ 
+      message: 'Failed to get AI response',
+      error: error.message,
+      details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 });
 

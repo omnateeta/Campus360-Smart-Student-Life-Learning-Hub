@@ -51,7 +51,7 @@ const AIChat = () => {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() || isLoading) return;
 
     const userMessage = {
       id: Date.now(),
@@ -61,13 +61,19 @@ const AIChat = () => {
     };
 
     setMessages(prev => [...prev, userMessage]);
-    const currentInput = inputValue;
     setInputValue('');
     setIsLoading(true);
 
     try {
-      // Call real AI API
-      const response = await aiService.chat(currentInput);
+      // Add a timeout for the API call
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timed out. Please try again.')), 15000)
+      );
+
+      const response = await Promise.race([
+        aiService.chat(inputValue),
+        timeoutPromise
+      ]);
       
       const aiResponse = {
         id: Date.now() + 1,
@@ -79,13 +85,24 @@ const AIChat = () => {
       setMessages(prev => [...prev, aiResponse]);
     } catch (error) {
       console.error('AI chat error:', error);
-      toast.error('Failed to get AI response. Please try again.');
       
-      // Add error message to chat
+      let errorMessage = "I'm having trouble connecting to the AI service. ";
+      
+      if (error.message.includes('timeout')) {
+        errorMessage += "The request took too long to complete. ";
+      } else if (error.response?.status === 500) {
+        errorMessage += "The AI service is currently unavailable. ";
+      } else if (error.response?.data?.error) {
+        errorMessage += error.response.data.error;
+      }
+      
+      errorMessage += "Please try again in a moment.";
+      
       const errorResponse = {
         id: Date.now() + 1,
         type: 'ai',
-        content: 'Sorry, I\'m having trouble connecting right now. Please try again in a moment.',
+        content: errorMessage,
+        isError: true,
         timestamp: new Date(),
       };
       
