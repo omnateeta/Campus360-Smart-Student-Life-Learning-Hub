@@ -1,30 +1,123 @@
-# 🧠 AI Study Planner + Tracker
+# 🎓 Campus 360° - Smart Student Life & Learning Hub
 
-A comprehensive MERN stack web application that helps students plan, manage, and track their study goals using AI assistance.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](http://makeapullrequest.com)
 
-## 🚀 Features
+A comprehensive MERN stack web application that revolutionizes student life management through AI-powered study planning, task management, and productivity tools.
 
-### 🔐 Authentication
-- JWT token-based authentication
-- Google OAuth2 integration
-- Password reset functionality
+## 🌟 Features
+
+### 🔐 Authentication & Security
+- 🔑 JWT token-based authentication
+- 🌐 Google OAuth2 integration
+- 🔄 Password reset functionality
+- 🛡️ Secure session management
 
 ### 🧠 AI-Powered Study Planning
-- Automatic study plan generation using OpenAI API
-- Intelligent topic prioritization
-- Dynamic plan recalculation
+- 🤖 Automatic study plan generation using OpenAI API
+- 🎯 Intelligent topic prioritization based on difficulty and deadlines
+- 🔄 Dynamic plan recalculation based on progress
+- 📊 Performance analytics and insights
 
-### 📅 Interactive Calendar
-- Drag-and-drop task management
-- Weekly and daily views
-- Color-coded subjects
+### 📅 Interactive Study Calendar
+- 🗓️ Visual study schedule management
+- ⏰ Time blocking and reminders
+- 🔄 Sync with Google Calendar
+- 📱 Mobile-responsive design
 
-### ✅ Task Tracking
-- Progress tracking with streak counters
-- Completion feedback
-- Motivation prompts
+### ✅ Task Management
+- 📝 Create and organize study tasks
+- 🏷️ Categorize by subjects and priority
+- 📊 Progress tracking and analytics
+- ⏱️ Time tracking and Pomodoro timer
 
-### 🧘 Focus Timer
+### 📊 Analytics Dashboard
+- 📈 Visual progress tracking
+- 📊 Performance metrics and insights
+- 🎯 Goal setting and achievement tracking
+- 📊 Customizable reports
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js (v14 or later)
+- MongoDB Atlas account or local MongoDB
+- OpenAI API key
+- Google OAuth credentials
+
+### Installation
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/omnateeta/Campus360-Smart-Student-Life-Learning-Hub.git
+   cd Campus360-Smart-Student-Life-Learning-Hub
+   ```
+
+2. **Install dependencies**
+   ```bash
+   # Install backend dependencies
+   cd backend
+   npm install
+   
+   # Install frontend dependencies
+   cd ../frontend
+   npm install
+   ```
+
+3. **Set up environment variables**
+   Create a `.env` file in the `backend` directory with:
+   ```
+   MONGODB_URI=your_mongodb_connection_string
+   JWT_SECRET=your_jwt_secret
+   OPENAI_API_KEY=your_openai_api_key
+   GOOGLE_CLIENT_ID=your_google_client_id
+   GOOGLE_CLIENT_SECRET=your_google_client_secret
+   ```
+
+4. **Run the application**
+   ```bash
+   # Start backend server
+   cd backend
+   npm run dev
+   
+   # In a new terminal, start frontend
+   cd frontend
+   npm start
+   ```
+
+## 🛠️ Tech Stack
+
+### Frontend
+- React.js
+- Material-UI
+- Redux for state management
+- Chart.js for visualizations
+
+### Backend
+- Node.js with Express
+- MongoDB with Mongoose
+- JWT for authentication
+- OpenAI API integration
+
+## 🤝 Contributing
+
+Contributions are what make the open-source community an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## 📄 License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
+## 📧 Contact
+
+Your Name - [@your_twitter](https://twitter.com/your_handle) - your.email@example.com
+
+Project Link: [https://github.com/omnateeta/Campus360-Smart-Student-Life-Learning-Hub](https://github.com/omnateeta/Campus360-Smart-Student-Life-Learning-Hub)
 - Built-in Pomodoro timer
 - Session analytics
 - Ambient music integration
